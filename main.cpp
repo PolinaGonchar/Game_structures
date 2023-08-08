@@ -6,7 +6,7 @@ using namespace std;
 
 struct SKord{
     int x, y;
-    
+
     SKord():x(-1), y(-1){};
 };
 
@@ -17,11 +17,11 @@ struct SUnity{
     int zdrowie;
     int uron;
     SKord coor;
-    
+
     SUnity(): typ(""), wrag(true), nazwa(""), zdrowie(0), uron(0){};
-    
+
     void read_data(ifstream&);
-    
+
 };
 
 struct SGame{
@@ -29,7 +29,7 @@ struct SGame{
     SKord map_size;
     int number_people;
     SUnity* people;
-    
+
     SGame():map(nullptr), number_people(0), people(nullptr){};
     ~SGame(){
         if(map){
@@ -45,8 +45,8 @@ struct SGame{
             people = nullptr;
         }
     }
-    
-    
+
+
     void read_size(ifstream&);
     void read_map(ifstream&);
     void print_map(ofstream&);
@@ -57,9 +57,9 @@ struct SGame{
 
 // сделать 3 файла с инфой о людях рыцарь,лучник,пикинер(начинаю прописывать все даные без типа и без врага
 int main(int argc, char * argv[]) {
-    
+
     //считываю размер карты, а потом саму карту
-    
+//Kooommment
     //SwitchСпросить сколько создать юниитов (в функции иниц). Вызываю функцию, которая инициалировала бы табличку с чувачками , использующая дефолт данные и ее заполняет из файла
     return 0;
 }
