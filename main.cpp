@@ -23,16 +23,19 @@ struct SUnity{
     char type;
     bool enemy;
     string name;
+    static int id;
     int health;
     int damage;
     SCoordinates coord;
 
-    SUnity(): type(0), enemy(true), name(""), health(0), damage(0){};
+    SUnity(): type(0), enemy(true), name(""), health(0), damage(0){id++;};
 
     bool read_data(ifstream&);
     bool print_unit(ostream&);
 
 };
+
+int SUnity::id = 0;
 
 struct SGame{
     char** map;
@@ -62,6 +65,8 @@ struct SGame{
     bool print_map(ostream&);
     bool print(ostream&);
     void initUnits(ifstream&, ifstream& , ifstream&);
+    void moveUnit(int indexUnit, int moveX , int moveY);
+    void applyDamage(int indexUnit);
 };
 
 
@@ -91,25 +96,27 @@ bool SUnity::read_data(ifstream& fin){
         fin.close();
         return false;
     }
-    fin >> coord.x;
-    if (!fin.good()){
-        cerr << "Error reading coord.x" << endl;
-        fin.ignore();
-        fin.clear();
-        fin.close();
-        return false;
-    }
-    fin >> coord.y;
-    if (!fin.good()) {
-        cerr << "Error reading coord.y" << endl;
-        fin.ignore();
-        fin.clear();
-        fin.close();
-        return false;
-    }
-    else{
-        return true;
-    }
+    /*if(enemy){
+        fin >> coord.x;
+        if (!fin.good()){
+            cerr << "Error reading coord.x" << endl;
+            fin.ignore();
+            fin.clear();
+            fin.close();
+            return false;
+        }
+        fin >> coord.y;
+        if (!fin.good()){
+            cerr << "Error reading coord.y" << endl;
+            fin.ignore();
+            fin.clear();
+            fin.close();
+            return false;
+        }
+        else{
+            return true;
+        }*/
+    return true;
 }
 
 bool SUnity::print_unit(ostream& out){
@@ -134,6 +141,7 @@ bool SUnity::print_unit(ostream& out){
         //out.close();
         return false;
     }
+    out << id << endl;
     out << health << endl;
     if(!out.good()){
         cerr<< "Error print ..." << endl;
@@ -165,7 +173,7 @@ bool SUnity::print_unit(ostream& out){
     return true;
 }
 
-bool SGame::read_size(ifstream& fin) {
+bool SGame::read_size(ifstream& fin){
     fin >> map_size.x >> map_size.y;
     if (!fin.good()) {
         cerr << "Error reading map size" << endl;
@@ -182,17 +190,17 @@ bool SGame::read_map(ifstream& fin){
     for(int i = 0 ; i < map_size.y; ++i){
         map[i]= new char[map_size.x];
     }
-    for (int i = 0; i < map_size.y; ++i) {
-        for (int j = 0; j < map_size.x; ++j) {
+    for (int i = 0; i < map_size.y; ++i){
+        for (int j = 0; j < map_size.x; ++j){
             fin >> map[i][j];
         }
     }
     return true;
 }
 
-bool SGame::print_map(ostream& out) {
-    for (int i = 0; i < map_size.y; ++i) {
-        for (int j = 0; j < map_size.x; ++j) {
+bool SGame::print_map(ostream& out){
+    for (int i = 0; i < map_size.y; ++i){
+        for (int j = 0; j < map_size.x; ++j){
             out << map[i][j];
         }
         out << endl;
@@ -200,7 +208,7 @@ bool SGame::print_map(ostream& out) {
     return true;
 }
 
-bool SGame::print(ostream& out) {
+bool SGame::print(ostream& out){
     out << "Map size: " << map_size.x << " x " << map_size.y << endl;
     out << "Number of people: " << number_people << endl;
 
@@ -208,7 +216,7 @@ bool SGame::print(ostream& out) {
     print_map(out);
 
 
-    for (int i = 0; i < number_people; ++i) {
+    for (int i = 0; i < number_people; ++i){
        people[i].print_unit(out);
     }
     return true;
@@ -216,27 +224,57 @@ bool SGame::print(ostream& out) {
 
 
 void SGame::initUnits(ifstream& knight_f, ifstream& archer_f, ifstream& pikeman_f){
-    cout << "Podaj ilosc osob ";
+    //изменить форы, добавить коменты и протестировать с неправильными буквами
+    //не считываем корд из файла, а только в зависимости враг ли это или нет (смодиф функцию данные из файла)
+    //Написать две функции в СГэйм движение и атака , если движение, то двигаемся по одной клетки на подумать ;( считываем с кодами Аски сам пототип прописать 
+    //функция урон убираем кол хп с конкретным индексом
+    //содать ид юнита , должна быть уник статик инт
+    cout << "Provide the number of people: ";
     cin >> number_people;
     people = new SUnity[number_people];
 
-    cout <<  "Choose who you want to play as: Knight, Archer, Pikeman" << "\t";
     for(int i = 0 ; i < number_people ; ++i ){
-        char tmp;
-        cin >> tmp;
-        if(tmp == Knight || tmp == Archer || tmp == Pikeman ){ //dodac else o tgm ze uzytkownik napisal nie ten znak
-            people[i].type = tmp ;
+        cout << "Choose who you want to play as: Knight(k), Archer(a), Pikeman(p) : ";
+        char tmp_type;
+        int tmp_enemy;
+        bool successfull_type = false;
+        bool successfull_enemy = false;
+
+        while(!successfull_type){
+            cin >> tmp_type;
+            if(tmp_type == Knight || tmp_type == Archer || tmp_type == Pikeman){
+                people[i].type = tmp_type;
+                successfull_type = true;
+
+                cout << "Is " << tmp_type << " an enemy? (0 for no, 1 for yes): ";
+                while(!successfull_enemy){
+                    cin >> tmp_enemy;
+                    if(tmp_enemy == 0 || tmp_enemy == 1){
+                        people[i].enemy = tmp_enemy;
+                        successfull_enemy = true;
+                    }
+                    else{
+                        cout << "Invalid input. Please enter 0 for no or 1 for yes." << endl;
+                    }
+                }
+            }
+            else{
+                cout << "Invalid input. You can choose Knight (k), Archer (a), or Pikeman (p)" << endl;
+            }
         }
     }
 
-    cout <<  "Choose who you want to play as: enemy or not" << "\t";
-    for(int i = 0; i < number_people; ++i){
-        int tmp;
-        cin >> tmp;
-        if(tmp == 0 || tmp == 1 ){ //dodac else o tgm ze uzytkownik napisal nie ten znak
-            people[i].enemy = tmp ;
+    for(int i = 0 ; i < number_people ; ++i){
+        if(!people[i].enemy){
+            people[i].coord.x = 0;
+            people[i].coord.y = 0;
+        }
+        else{
+            people[i].coord.x = map_size.x - 1 ;
+            people[i].coord.y = map_size.y -1 ;
         }
     }
+
     for (int i = 0 ; i < number_people; ++i){
         switch(people[i].type){
             case Knight:
@@ -255,6 +293,35 @@ void SGame::initUnits(ifstream& knight_f, ifstream& archer_f, ifstream& pikeman_
     }
 }
 // cout << int(moj znak)-jak znalesc kod ASCII (A-65)
+
+
+
+void SGame::moveUnit(int indexUnit, int moveX , int moveY){
+    if (indexUnit >= 0 ){
+        SCoordinates actual;
+        actual.x = people[indexUnit].coord.x;
+        actual.y = people[indexUnit].coord.y;
+        if((actual.x + moveX) >= map_size.x || (actual.y + moveY) >= map_size.y || (actual.x + moveX) < 0 || (actual.y + moveY) < 0){
+            cout << "Движение невозможно ";
+        }
+        else{
+            people[indexUnit].coord.x += moveX;
+            people[indexUnit].coord.y += moveY;
+        }
+    } else{
+        cout << "Invalid unit index" << endl;
+    }
+}
+void SGame::applyDamage(int indexUnit){
+    if (indexUnit >= 0){
+        people[indexUnit].health -= people[indexUnit].damage;
+        if (people[indexUnit].health <= 0){
+            cout << people[indexUnit].name << " has been defeated!" << endl;
+        }
+    } else{
+        cout << "Invalid unit index" << endl;
+    }
+}
 
 int main(int argc, char * argv[]){
     if(argc != 6){
